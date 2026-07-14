@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "node scripts/setup-prisma.js",
+    "vercel-build": "copy prisma\\schema.pg.prisma prisma\\schema.prisma /Y && prisma generate && next build",
+    "db:push": "npx prisma db push",
+    "db:seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

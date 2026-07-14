@@ -1,5 +1,4 @@
-// This is your Prisma schema file
-// Development: SQLite | Production: PostgreSQL
+// Prisma Schema - SQLite (dev) / PostgreSQL (prod)
 
 generator client {
   provider = "prisma-client-js"
@@ -12,15 +11,15 @@ datasource db {
 
 // ─── Users ───────────────────────────────────────────────
 model User {
-  id            String    @id @default(cuid())
-  phone         String    @unique
+  id            String   @id @default(cuid())
+  phone         String   @unique
   name          String?
   avatar        String?
-  role          String    @default("USER") // USER | COMPANION | ADMIN
-  walletBalance Float     @default(0)
-  isVerified    Boolean   @default(false)
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  role          String   @default("USER")
+  walletBalance Float    @default(0)
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   companion    Companion?    @relation("UserCompanion")
   orders       Order[]
@@ -31,22 +30,22 @@ model User {
   @@map("users")
 }
 
-// ─── Companions (陪玩者卡片) ─────────────────────────────
+// ─── Companions ──────────────────────────────────────────
 model Companion {
   id            String   @id @default(cuid())
   userId        String   @unique @map("user_id")
   nickname      String
-  gender        String   // MALE | FEMALE | OTHER
+  gender        String
   age           Int
   city          String
   avatarUrl     String   @map("avatar_url")
-  photos        String   @default("[]") // JSON array of photo URLs
+  photos        String   @default("[]")
   voiceIntroUrl String?  @map("voice_intro_url")
-  voiceDuration Float?   @map("voice_duration") // seconds
-  tags          String   @default("[]") // JSON array
+  voiceDuration Float?   @map("voice_duration")
+  tags          String   @default("[]")
   pricePerHour  Float    @map("price_per_hour")
   bio           String?
-  status        String   @default("OFFLINE") // ONLINE | OFFLINE | BUSY
+  status        String   @default("OFFLINE")
   rating        Float    @default(5.0)
   orderCount    Int      @default(0) @map("order_count")
   isFeatured    Boolean  @default(false) @map("is_featured")
@@ -66,11 +65,11 @@ model Order {
   orderNo       String    @unique @map("order_no")
   userId        String    @map("user_id")
   companionId   String    @map("companion_id")
-  serviceType   String    @default("GAME") @map("service_type") // GAME | CHAT | OTHER
+  serviceType   String    @default("GAME") @map("service_type")
   durationHours Int       @default(1) @map("duration_hours")
   amount        Float     @map("amount")
-  status        String    @default("PENDING") // PENDING | PAID | IN_PROGRESS | COMPLETED | CANCELLED | REFUNDED
-  paymentMethod String?   @map("payment_method") // WALLET | ALIPAY | WECHAT
+  status        String    @default("PENDING")
+  paymentMethod String?   @map("payment_method")
   paidAt        DateTime? @map("paid_at")
   completedAt   DateTime? @map("completed_at")
   cancelledAt   DateTime? @map("cancelled_at")
@@ -83,17 +82,17 @@ model Order {
   @@map("orders")
 }
 
-// ─── Transactions (交易流水) ─────────────────────────────
+// ─── Transactions ────────────────────────────────────────
 model Transaction {
   id              String   @id @default(cuid())
   userId          String   @map("user_id")
-  type            String   // RECHARGE | CONSUME | REFUND
+  type            String
   amount          Float    @map("amount")
   balanceBefore   Float    @map("balance_before")
   balanceAfter    Float    @map("balance_after")
-  paymentMethod   String?  @map("payment_method") // ALIPAY | WECHAT | WALLET
+  paymentMethod   String?  @map("payment_method")
   externalTradeNo String?  @map("external_trade_no")
-  status          String   @default("SUCCESS") // SUCCESS | FAILED | PENDING
+  status          String   @default("SUCCESS")
   createdAt       DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
@@ -107,9 +106,9 @@ model Review {
   orderId     String   @unique @map("order_id")
   userId      String   @map("user_id")
   companionId String   @map("companion_id")
-  rating      Int      // 1-5
+  rating      Int
   content     String?
-  tags        String   @default("[]") // JSON array
+  tags        String   @default("[]")
   createdAt   DateTime @default(now()) @map("created_at")
 
   order     Order     @relation(fields: [orderId], references: [id])
@@ -123,8 +122,8 @@ model Review {
 model AdminLog {
   id         String   @id @default(cuid())
   adminId    String   @map("admin_id")
-  action     String   // CREATE | UPDATE | DELETE | REFUND | BAN
-  targetType String   @map("target_type") // COMPANION | ORDER | USER
+  action     String
+  targetType String   @map("target_type")
   targetId   String   @map("target_id")
   detail     String?
   createdAt  DateTime @default(now()) @map("created_at")

@@ -1,0 +1,282 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ───────────────────────────────────────────────
+model User {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  name          String?
+  avatar        String?
+  role          String   @default("USER")
+  walletBalance Decimal  @default(0) @db.Decimal(10, 2)
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  companion    Companion?    @relation("UserCompanion")
+  orders       Order[]
+  reviews      Review[]
+  transactions Transaction[]
+  adminLogs    AdminLog[]
+
+  @@map("users")
+}
+
+// ─── Companions ──────────────────────────────────────────
+model Companion {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  nickname      String
+  gender        String
+  age           Int
+  city          String
+  avatarUrl     String   @map("avatar_url")
+  photos        String   @default("[]")
+  voiceIntroUrl String?  @map("voice_intro_url")
+  voiceDuration Float?   @map("voice_duration")
+  tags          String   @default("[]")
+  pricePerHour  Decimal  @map("price_per_hour") @db.Decimal(10, 2)
+  bio           String?
+  status        String   @default("OFFLINE")
+  rating        Float    @default(5.0)
+  orderCount    Int      @default(0) @map("order_count")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation("UserCompanion", fields: [userId], references: [id])
+  orders  Order[]
+  reviews Review[]
+
+  @@map("companions")
+}
+
+// ─── Orders ──────────────────────────────────────────────
+model Order {
+  id            String    @id @default(cuid())
+  orderNo       String    @unique @map("order_no")
+  userId        String    @map("user_id")
+  companionId   String    @map("companion_id")
+  serviceType   String    @default("GAME") @map("service_type")
+  durationHours Int       @default(1) @map("duration_hours")
+  amount        Decimal   @map("amount") @db.Decimal(10, 2)
+  status        String    @default("PENDING")
+  paymentMethod String?   @map("payment_method")
+  paidAt        DateTime? @map("paid_at")
+  completedAt   DateTime? @map("completed_at")
+  cancelledAt   DateTime? @map("cancelled_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id])
+  companion Companion @relation(fields: [companionId], references: [id])
+  review    Review?
+
+  @@map("orders")
+}
+
+// ─── Transactions ────────────────────────────────────────
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  type            String
+  amount          Decimal  @map("amount") @db.Decimal(10, 2)
+  balanceBefore   Decimal  @map("balance_before") @db.Decimal(10, 2)
+  balanceAfter    Decimal  @map("balance_after") @db.Decimal(10, 2)
+  paymentMethod   String?  @map("payment_method")
+  externalTradeNo String?  @map("external_trade_no")
+  status          String   @default("SUCCESS")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("transactions")
+}
+
+// ─── Reviews ─────────────────────────────────────────────
+model Review {
+  id          String   @id @default(cuid())
+  orderId     String   @unique @map("order_id")
+  userId      String   @map("user_id")
+  companionId String   @map("companion_id")
+  rating      Int
+  content     String?
+  tags        String   @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  order     Order     @relation(fields: [orderId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  companion Companion @relation(fields: [companionId], references: [id])
+
+  @@map("reviews")
+}
+
+// ─── Admin Logs ──────────────────────────────────────────
+model AdminLog {
+  id         String   @id @default(cuid())
+  adminId    String   @map("admin_id")
+  action     String
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  detail     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@map("admin_logs")
+}
+
+// ─── Verification Codes ─────────────────────────────────
+model VerificationCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  used      Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, code])
+  @@map("verification_codes")
+}
+
+// ─── Users ───────────────────────────────────────────────
+model User {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  name          String?
+  avatar        String?
+  role          String   @default("USER")
+  walletBalance Float    @default(0)
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  companion    Companion?    @relation("UserCompanion")
+  orders       Order[]
+  reviews      Review[]
+  transactions Transaction[]
+  adminLogs    AdminLog[]
+
+  @@map("users")
+}
+
+// ─── Companions ──────────────────────────────────────────
+model Companion {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  nickname      String
+  gender        String
+  age           Int
+  city          String
+  avatarUrl     String   @map("avatar_url")
+  photos        String   @default("[]")
+  voiceIntroUrl String?  @map("voice_intro_url")
+  voiceDuration Float?   @map("voice_duration")
+  tags          String   @default("[]")
+  pricePerHour  Float    @map("price_per_hour")
+  bio           String?
+  status        String   @default("OFFLINE")
+  rating        Float    @default(5.0)
+  orderCount    Int      @default(0) @map("order_count")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation("UserCompanion", fields: [userId], references: [id])
+  orders  Order[]
+  reviews Review[]
+
+  @@map("companions")
+}
+
+// ─── Orders ──────────────────────────────────────────────
+model Order {
+  id            String    @id @default(cuid())
+  orderNo       String    @unique @map("order_no")
+  userId        String    @map("user_id")
+  companionId   String    @map("companion_id")
+  serviceType   String    @default("GAME") @map("service_type")
+  durationHours Int       @default(1) @map("duration_hours")
+  amount        Float     @map("amount")
+  status        String    @default("PENDING")
+  paymentMethod String?   @map("payment_method")
+  paidAt        DateTime? @map("paid_at")
+  completedAt   DateTime? @map("completed_at")
+  cancelledAt   DateTime? @map("cancelled_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id])
+  companion Companion @relation(fields: [companionId], references: [id])
+  review    Review?
+
+  @@map("orders")
+}
+
+// ─── Transactions ────────────────────────────────────────
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  type            String
+  amount          Float    @map("amount")
+  balanceBefore   Float    @map("balance_before")
+  balanceAfter    Float    @map("balance_after")
+  paymentMethod   String?  @map("payment_method")
+  externalTradeNo String?  @map("external_trade_no")
+  status          String   @default("SUCCESS")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("transactions")
+}
+
+// ─── Reviews ─────────────────────────────────────────────
+model Review {
+  id          String   @id @default(cuid())
+  orderId     String   @unique @map("order_id")
+  userId      String   @map("user_id")
+  companionId String   @map("companion_id")
+  rating      Int
+  content     String?
+  tags        String   @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  order     Order     @relation(fields: [orderId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  companion Companion @relation(fields: [companionId], references: [id])
+
+  @@map("reviews")
+}
+
+// ─── Admin Logs ──────────────────────────────────────────
+model AdminLog {
+  id         String   @id @default(cuid())
+  adminId    String   @map("admin_id")
+  action     String
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  detail     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@map("admin_logs")
+}
+
+// ─── Verification Codes ─────────────────────────────────
+model VerificationCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  used      Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, code])
+  @@map("verification_codes")
+}
