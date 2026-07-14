@@ -24,7 +24,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       // 退款到钱包
       if (order.paymentMethod === "WALLET") {
         const user = await tx.user.findUnique({ where: { id: order.userId } });
-        const newBalance = user!.walletBalance + order.amount;
+        const newBalance = Number(user!.walletBalance) + Number(order.amount);
 
         await tx.user.update({
           where: { id: order.userId },

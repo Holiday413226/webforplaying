@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     // 钱包支付：检查余额并扣款
     if (paymentMethod === "WALLET") {
       const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (!user || user.walletBalance < amount) {
+      if (!user || Number(user.walletBalance) < amount) {
         return NextResponse.json({ success: false, message: "余额不足，请充值" }, { status: 400 });
       }
     }
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       // 钱包支付：扣款
       if (paymentMethod === "WALLET") {
         const user = await tx.user.findUnique({ where: { id: userId } });
-        const newBalance = user!.walletBalance - amount;
+        const newBalance = Number(user!.walletBalance) - amount;
 
         await tx.user.update({
           where: { id: userId },

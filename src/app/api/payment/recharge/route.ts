@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     // 开发模式：直接充值成功
     if (process.env.NODE_ENV === "development" || process.env.ALIPAY_APP_ID === "sandbox") {
       const user = await prisma.user.findUnique({ where: { id: userId } });
-      const newBalance = user!.walletBalance + amount;
+      const newBalance = Number(user!.walletBalance) + amount;
 
       await prisma.$transaction([
         prisma.user.update({
