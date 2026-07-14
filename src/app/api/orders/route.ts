@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "陪玩不存在" }, { status: 404 });
     }
 
-    const amount = companion.pricePerHour * (durationHours || 1);
+    const amount = Number(companion.pricePerHour) * (durationHours || 1);
     const orderNo = generateOrderNo();
 
     // 钱包支付：检查余额并扣款
