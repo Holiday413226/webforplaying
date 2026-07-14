@@ -10,7 +10,7 @@ console.log("[vercel-build] Switching to PostgreSQL schema...");
 fs.copyFileSync(pgSchemaPath, schemaPath);
 
 console.log("[vercel-build] Generating Prisma client...");
-execSync("npx prisma generate", { stdio: "inherit" });
+execSync("prisma generate", { stdio: "inherit", env: { ...process.env, PATH: process.env.PATH + ":" + path.join(__dirname, "..", "node_modules", ".bin") } });
 
 console.log("[vercel-build] Building Next.js...");
-execSync("npx next build", { stdio: "inherit" });
+execSync("next build", { stdio: "inherit", env: { ...process.env, PATH: process.env.PATH + ":" + path.join(__dirname, "..", "node_modules", ".bin") } });
