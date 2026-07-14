@@ -15,5 +15,6 @@ if (dbUrl.startsWith("postgresql://") || dbUrl.startsWith("postgres://")) {
 }
 
 console.log("[setup-prisma] Running prisma generate...");
-execSync("npx prisma generate", { stdio: "inherit" });
+const prismaBin = path.join(__dirname, "..", "node_modules", ".bin", "prisma");
+execSync(`"${prismaBin}" generate`, { stdio: "inherit" });
 console.log("[setup-prisma] Done!");
