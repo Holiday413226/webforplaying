@@ -1,0 +1,148 @@
+// This is your Prisma schema file
+// Development: SQLite | Production: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ───────────────────────────────────────────────
+model User {
+  id            String    @id @default(cuid())
+  phone         String    @unique
+  name          String?
+  avatar        String?
+  role          String    @default("USER") // USER | COMPANION | ADMIN
+  walletBalance Float     @default(0)
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  companion    Companion?    @relation("UserCompanion")
+  orders       Order[]
+  reviews      Review[]
+  transactions Transaction[]
+  adminLogs    AdminLog[]
+
+  @@map("users")
+}
+
+// ─── Companions (陪玩者卡片) ─────────────────────────────
+model Companion {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  nickname      String
+  gender        String   // MALE | FEMALE | OTHER
+  age           Int
+  city          String
+  avatarUrl     String   @map("avatar_url")
+  photos        String   @default("[]") // JSON array of photo URLs
+  voiceIntroUrl String?  @map("voice_intro_url")
+  voiceDuration Float?   @map("voice_duration") // seconds
+  tags          String   @default("[]") // JSON array
+  pricePerHour  Float    @map("price_per_hour")
+  bio           String?
+  status        String   @default("OFFLINE") // ONLINE | OFFLINE | BUSY
+  rating        Float    @default(5.0)
+  orderCount    Int      @default(0) @map("order_count")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation("UserCompanion", fields: [userId], references: [id])
+  orders  Order[]
+  reviews Review[]
+
+  @@map("companions")
+}
+
+// ─── Orders ──────────────────────────────────────────────
+model Order {
+  id            String    @id @default(cuid())
+  orderNo       String    @unique @map("order_no")
+  userId        String    @map("user_id")
+  companionId   String    @map("companion_id")
+  serviceType   String    @default("GAME") @map("service_type") // GAME | CHAT | OTHER
+  durationHours Int       @default(1) @map("duration_hours")
+  amount        Float     @map("amount")
+  status        String    @default("PENDING") // PENDING | PAID | IN_PROGRESS | COMPLETED | CANCELLED | REFUNDED
+  paymentMethod String?   @map("payment_method") // WALLET | ALIPAY | WECHAT
+  paidAt        DateTime? @map("paid_at")
+  completedAt   DateTime? @map("completed_at")
+  cancelledAt   DateTime? @map("cancelled_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id])
+  companion Companion @relation(fields: [companionId], references: [id])
+  review    Review?
+
+  @@map("orders")
+}
+
+// ─── Transactions (交易流水) ─────────────────────────────
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  type            String   // RECHARGE | CONSUME | REFUND
+  amount          Float    @map("amount")
+  balanceBefore   Float    @map("balance_before")
+  balanceAfter    Float    @map("balance_after")
+  paymentMethod   String?  @map("payment_method") // ALIPAY | WECHAT | WALLET
+  externalTradeNo String?  @map("external_trade_no")
+  status          String   @default("SUCCESS") // SUCCESS | FAILED | PENDING
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("transactions")
+}
+
+// ─── Reviews ─────────────────────────────────────────────
+model Review {
+  id          String   @id @default(cuid())
+  orderId     String   @unique @map("order_id")
+  userId      String   @map("user_id")
+  companionId String   @map("companion_id")
+  rating      Int      // 1-5
+  content     String?
+  tags        String   @default("[]") // JSON array
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  order     Order     @relation(fields: [orderId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  companion Companion @relation(fields: [companionId], references: [id])
+
+  @@map("reviews")
+}
+
+// ─── Admin Logs ──────────────────────────────────────────
+model AdminLog {
+  id         String   @id @default(cuid())
+  adminId    String   @map("admin_id")
+  action     String   // CREATE | UPDATE | DELETE | REFUND | BAN
+  targetType String   @map("target_type") // COMPANION | ORDER | USER
+  targetId   String   @map("target_id")
+  detail     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@map("admin_logs")
+}
+
+// ─── Verification Codes ─────────────────────────────────
+model VerificationCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  used      Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, code])
+  @@map("verification_codes")
+}
